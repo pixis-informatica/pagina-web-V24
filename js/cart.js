@@ -75,7 +75,7 @@ function obtenerNumeroPresupuesto() {
 /* =========================
    HELPERS GLOBALES DE NAVEGACIÓN
 ========================= */
-window.openProductBySlug = function(slug, fromHistory = false) {
+window.openProductBySlug = function(slug) {
     if (!slug) return false;
     const cards = document.querySelectorAll('.card');
     if (cards.length === 0) {
@@ -96,11 +96,7 @@ window.openProductBySlug = function(slug, fromHistory = false) {
         if (title) {
             if (normalizeSlug(title) === slug) {
                 console.log("Pixis: Producto encontrado por slug, abriendo modal...");
-                if (typeof window.openProductModal === 'function') {
-                    window.openProductModal(card, !fromHistory);
-                } else {
-                    card.click();
-                }
+                card.click();
                 
                 // Asegurar que sea visible (scroll)
                 setTimeout(() => {
@@ -1055,21 +1051,14 @@ document.addEventListener('click', function (e) {
   if (card.classList.contains('sin-stock')) return;
   if (!MODAL_ENABLED) return;
 
-  window.openProductModal(card, true);
-});
-
-window.openProductModal = function (card, pushToHistory = true) {
-  if (card.classList.contains('sin-stock')) return;
-  if (!MODAL_ENABLED) return;
-
   const btn = card.querySelector(".btn-add-cart");
 
   productoActual = {
-    name: btn.dataset.name,
-    price: parseFloat(btn.dataset.price),
-    priceLocal: parseFloat(btn.dataset.priceLocal) || parseFloat(btn.dataset.price),
-    img: card.dataset.img
-  };
+  name: btn.dataset.name,
+  price: parseFloat(btn.dataset.price),
+  priceLocal: parseFloat(btn.dataset.priceLocal) || parseFloat(btn.dataset.price),
+  img: card.dataset.img
+};
   // pasar datos al botón del modal
   const modalBtn = document.getElementById("btnAddToCart");
   modalBtn.dataset.name = productoActual.name;
@@ -1095,6 +1084,7 @@ window.openProductModal = function (card, pushToHistory = true) {
   resetZoomMobile();
 
   images.forEach(src => {
+
     const thumb = document.createElement("img");
     thumb.src = src.trim();
 
@@ -1105,6 +1095,7 @@ window.openProductModal = function (card, pushToHistory = true) {
     });
 
     thumbsContainer.appendChild(thumb);
+
   });
 
   resetZoom();
@@ -1159,14 +1150,14 @@ window.openProductModal = function (card, pushToHistory = true) {
   }
 
   // Modificar la URL con un identificador único paramétrico para compartir
-  if (pushToHistory) {
-    let slug = card.dataset.title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    history.pushState({ modalOpen: true }, "", "?producto=" + slug + "&" + getCacheBuster());
-  }
+  // El cache buster diario (&_t=YYYYMMDD) fuerza a WhatsApp/Facebook a re-scrapear
+  // el link automáticamente cada día, sin necesidad de agregar &=Vx manualmente.
+  let slug = card.dataset.title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  history.pushState({ modalOpen: true }, "", "?producto=" + slug + "&" + getCacheBuster());
 
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
-};
+});
 
 
 /* =========================
@@ -1199,13 +1190,9 @@ btnAddToCart?.addEventListener("click", () => {
 /* =========================
    CERRAR MODAL
 ========================= */
-function closeModal(fromHistory = false) {
-  if (fromHistory !== true && window.location.search.includes('producto=')) {
-    if (window.history.state && window.history.state.modalOpen) {
-      window.history.back();
-    } else {
-      history.pushState(null, "", window.location.pathname);
-    }
+function closeModal() {
+  if (window.location.search.includes('producto=')) {
+    history.pushState(null, "", window.location.pathname);
   }
   modal.classList.remove('active');
   document.body.style.overflow = '';
@@ -1612,7 +1599,7 @@ function procesarDeepLinks() {
     const prodSlug = params.get('producto');
     if (prodSlug && window.openProductBySlug) {
         const intentarAbrir = () => {
-            const abierto = window.openProductBySlug(prodSlug, true);
+            const abierto = window.openProductBySlug(prodSlug);
             if (!abierto && deepLinkAttempts < MAX_DEEP_LINK_ATTEMPTS) {
                 deepLinkAttempts++;
                 console.log(`Pixis: Reintentando abrir producto (${deepLinkAttempts}/${MAX_DEEP_LINK_ATTEMPTS})...`);
@@ -1629,7 +1616,7 @@ function procesarDeepLinks() {
     const bannerParam = params.get('banner');
     if (bannerParam && window.abrirBannerLink) {
         setTimeout(() => {
-            window.abrirBannerLink(bannerParam, true);
+            window.abrirBannerLink(bannerParam);
         }, 600);
     }
 
@@ -1637,43 +1624,10 @@ function procesarDeepLinks() {
     const catParam = params.get('categoria');
     if (catParam && window.abrirCategoria) {
         setTimeout(() => {
-            window.abrirCategoria(catParam, true);
+            window.abrirCategoria(catParam);
         }, 700);
     }
 }
-
-window.syncAppStateFromUrl = function(fromHistory = false) {
-    const params = new URLSearchParams(window.location.search);
-    const prodSlug = params.get('producto');
-    const bannerId = params.get('banner');
-    const catId = params.get('categoria');
-
-    // 1. Sincronizar Modal de Producto
-    if (prodSlug) {
-        if (window.openProductBySlug) {
-            window.openProductBySlug(prodSlug, fromHistory);
-        }
-    } else {
-        if (typeof closeModal === 'function') {
-            closeModal(true); // Cerrar visualmente
-        }
-    }
-
-    // 2. Sincronizar Banners / Categorías / Home
-    if (bannerId) {
-        if (window.abrirBannerLink) {
-            window.abrirBannerLink(bannerId, fromHistory);
-        }
-    } else if (catId) {
-        if (window.abrirCategoria) {
-            window.abrirCategoria(catId, fromHistory);
-        }
-    } else {
-        if (window.goHome) {
-            window.goHome(fromHistory);
-        }
-    }
-};
 
 // Re-inicializar cuando state.js inyecte productos dinámicos
 document.addEventListener('pixis:productos-renderizados', () => {
@@ -1808,7 +1762,7 @@ function insertarSeparadoresEntreCategorias() {
 /* =========================
    FILTRO ESPECIAL DESDE BANNERS
 ========================= */
-window.ejecutarFiltroBanner = function(filtro, textoVisible, bannerId = null, fromHistory = false) {
+window.ejecutarFiltroBanner = function(filtro, textoVisible, bannerId = null) {
   const sf = document.getElementById('searchInput');
   if (!sf) return;
 
@@ -1816,7 +1770,7 @@ window.ejecutarFiltroBanner = function(filtro, textoVisible, bannerId = null, fr
 
   // Actualizar URL para que sea compartible
   // El cache buster diario fuerza un re-scrape automático en redes sociales.
-  if (bannerId && fromHistory !== true) {
+  if (bannerId) {
     history.pushState({ banner: bannerId }, "", "?banner=" + bannerId + "&" + getCacheBuster());
   }
 
@@ -1867,7 +1821,7 @@ window._bannerData = {
   'perifericos-raptor': { f: 'perifericosRaptor', t: 'Periféricos Raptor' }
 };
 
-window.abrirBannerLink = function(id, fromHistory = false) {
+window.abrirBannerLink = function(id) {
   const data = window._bannerData[id];
   if (!data) return;
 
@@ -1877,7 +1831,7 @@ window.abrirBannerLink = function(id, fromHistory = false) {
     filtro = window._bannerFiltros[filtro];
   }
 
-  window.ejecutarFiltroBanner(filtro, data.t, id, fromHistory);
+  window.ejecutarFiltroBanner(filtro, data.t, id);
 };
 
 /* Filtros precisos reutilizables para los banners */
@@ -2218,12 +2172,13 @@ bubbleInput.addEventListener('blur', () => {
   bar.className = 'search-sort-bar';
   bar.id = 'searchSortBar';
   bar.innerHTML = `
-    <span class="sort-label">Ordenar por:</span>
-    <label class="switch-precio" style="margin-left: 0;">
-      <input type="checkbox" id="searchSortToggle" class="toggle-precio">
-      <span class="slider"></span>
-      <span class="switch-text">Precio menor a mayor</span>
-    </label>
+    <label class="sort-label" for="searchSortSelect">Ordenar por:</label>
+    <select id="searchSortSelect" class="search-sort-select">
+      <option value="">Sin ordenar</option>
+      <option value="price-asc">Precio ↑ menor a mayor</option>
+      <option value="price-desc">Precio ↓ mayor a menor</option>
+      <option value="az">Nombre A → Z</option>
+    </select>
   `;
 
   const h2Prod = [...document.querySelectorAll('h2')]
@@ -2254,6 +2209,7 @@ bubbleInput.addEventListener('blur', () => {
       if (card._origParent) {
         try {
           // CRÍTICO: verificar que _origNext es hijo de _origParent
+          // Si también fue movido a _sortFlatContainer, isConnected=true pero NO es hijo → insertBefore falla
           const refOk = card._origNext
             && card._origNext.isConnected
             && card._origNext.parentNode === card._origParent;
@@ -2264,10 +2220,9 @@ bubbleInput.addEventListener('blur', () => {
             card._origParent.appendChild(card);
           }
         } catch(e) {
+          // Fallback absoluto: simplemente agregar al padre
           try { card._origParent.appendChild(card); } catch(_) {}
         }
-        // 🔑 Limpiar style.order residual del sort de categorías/busqueda anterior
-        card.style.order = '';
         delete card._origParent;
         delete card._origNext;
       }
@@ -2278,11 +2233,14 @@ bubbleInput.addEventListener('blur', () => {
   function aplicarOrdenBusqueda() {
 
     // Siempre restaurar primero para que las cards estén en sus .productos
+    // (si vienen del _sortFlatContainer de un sort anterior, no se encontrarían)
     restaurarOrigen();
 
-    // 1. Recoger TODAS las cards visibles del catálogo (incluyendo las inyectadas dinámicamente)
+    if (!activeSort) return;
+
+    // 1. Recoger TODAS las cards visibles SOLO del catálogo
     const todasVisibles = [];
-    document.querySelectorAll('#catalogo-completo .productos, #dynamic-catalog-container .productos').forEach(cont => {
+    document.querySelectorAll('#catalogo-completo .productos').forEach(cont => {
       cont.querySelectorAll('.card:not(.oculta)').forEach(card => {
         todasVisibles.push(card);
       });
@@ -2297,23 +2255,19 @@ bubbleInput.addEventListener('blur', () => {
       }
     });
 
-    // getP robusto: misma lógica que getPrice en ordenarProductos
-    const getP = el => {
-      const cash = el.dataset.cashPrice || el.querySelector('.btn-add-cart')?.dataset.priceLocal;
-      if (cash && cash !== 'undefined') return parseInt(String(cash).replace(/\D/g, '')) || 0;
-      const transfer = el.dataset.priceNum || el.dataset.price || el.querySelector('.btn-add-cart')?.dataset.price;
-      if (transfer && transfer !== 'undefined') return parseInt(String(transfer).replace(/\D/g, '')) || 0;
-      const text = el.querySelector('.precio')?.textContent || '0';
-      return parseInt(text.replace(/\D/g, '')) || 0;
-    };
-
-    // 3. Ordenar: sin-stock SIEMPRE al final, luego por precio si toggle activo
-    // Si toggle OFF (activeSort=null): return 0 = sort estable mantiene orden DOM original
+    // 3. Ordenar globalmente
     todasVisibles.sort((a, b) => {
       const aOff = a.classList.contains('sin-stock');
       const bOff = b.classList.contains('sin-stock');
       if (aOff && !bOff) return 1;
       if (!aOff && bOff) return -1;
+
+      const getP = el => {
+        const v = el.querySelector('.btn-add-cart')?.dataset.priceLocal
+          || el.querySelector('.btn-add-cart')?.dataset.price
+          || '0';
+        return parseInt(String(v).replace(/\D/g, '')) || 0;
+      };
 
       if (activeSort === 'az') {
         const nA = (a.dataset.title || a.querySelector('h3')?.textContent || '').toLowerCase();
@@ -2322,42 +2276,26 @@ bubbleInput.addEventListener('blur', () => {
       }
       if (activeSort === 'price-asc')  return getP(a) - getP(b);
       if (activeSort === 'price-desc') return getP(b) - getP(a);
-      return 0; // sin sort activo: sort estable = orden DOM original preservado
+      return 0;
     });
 
     // 4. Mover al contenedor plano en el orden correcto
-    // Siempre usamos flat container en modo búsqueda para garantizar sin-stock al final global
     const fc = obtenerFlatContainer();
-    todasVisibles.forEach((card, i) => {
-      fc.appendChild(card);
-      card.style.order = i; // forzar orden explícito para anular style.order residual de categorías
-    });
+    todasVisibles.forEach(card => fc.appendChild(card));
   }
 
-  /* ── Cambio en el switch toggle ── */
+  /* ── Cambio en el select dropdown ── */
   bar.addEventListener('change', e => {
-    const toggle = e.target.closest('#searchSortToggle');
-    if (!toggle) return;
-    activeSort = toggle.checked ? 'price-asc' : null;
+    const sel = e.target.closest('#searchSortSelect');
+    if (!sel) return;
+    activeSort = sel.value || null;
     aplicarOrdenBusqueda();
   });
 
   /* ── Sincronizar con el buscador ── */
   const sf = document.getElementById('searchInput');
-  let _ultimaBusqueda = '';
   sf.addEventListener('input', () => {
-    const valorActual = sf.value.trim();
-    const buscando = valorActual.length > 0;
-
-    // Si el término de búsqueda cambió, resetear el sort para no arrastrar estado anterior
-    if (valorActual !== _ultimaBusqueda) {
-      _ultimaBusqueda = valorActual;
-      activeSort = null;
-      const toggle = document.getElementById('searchSortToggle');
-      if (toggle) toggle.checked = false;
-      // Restaurar order residual en todas las cards
-      document.querySelectorAll('.card').forEach(c => { c.style.order = ''; });
-    }
+    const buscando = sf.value.trim().length > 0;
 
     // Siempre restaurar antes de buscar (cards deben estar en sus .productos)
     restaurarOrigen();
@@ -2367,7 +2305,7 @@ bubbleInput.addEventListener('blur', () => {
         const hay = !!document.querySelector('.productos .card:not(.oculta)');
         if (hay) {
           bar.classList.add('visible');
-          aplicarOrdenBusqueda(); // siempre aplicar: garantiza sin-stock al final aunque toggle esté OFF
+          if (activeSort) aplicarOrdenBusqueda();
         } else {
           bar.classList.remove('visible');
         }
@@ -2375,10 +2313,9 @@ bubbleInput.addEventListener('blur', () => {
     } else {
       bar.classList.remove('visible');
       activeSort = null;
-      const toggle = document.getElementById('searchSortToggle');
-      if (toggle) toggle.checked = false;
-      // Limpiar style.order residual en todas las cards al cancelar la búsqueda
-      document.querySelectorAll('.card').forEach(c => { c.style.order = ''; });
+      // Resetear el select al estado inicial
+      const sel = document.getElementById('searchSortSelect');
+      if (sel) sel.value = '';
     }
   });
 
@@ -2516,13 +2453,7 @@ window.addEventListener('scroll', () => {
   // ✅ Botones flotantes fijos: se desactiva el movimiento al hacer scroll.
   // stopFloatsfollowFooter(); // mobile
   // stopFloatsDesktop();      // desktop
-  
-  if (window.scrollY > 50) {
-    document.body.classList.add('scrolled');
-  } else {
-    document.body.classList.remove('scrolled');
-  }
-}, { passive: true });
+});
 
 window.addEventListener('resize', () => {
   // stopFloatsfollowFooter();
@@ -3317,7 +3248,7 @@ onPixisDOMReady(initPixisMenuUI);
 // NUEVA FUNCIONALIDAD: Filtrar categorias ("solo su sector")
 // Los enlaces se inyectan dinámicamente → usamos delegación en el contenedor
 
-window.abrirCategoria = function(targetId, fromHistory = false) {
+window.abrirCategoria = function(targetId) {
     if (!targetId) return;
 
     // --- LIMPIEZA DE NAVEGACIÓN ---
@@ -3337,7 +3268,7 @@ window.abrirCategoria = function(targetId, fromHistory = false) {
 
     // Actualizar URL para que sea compartible de forma directa
     // El cache buster diario fuerza un re-scrape automático en redes sociales.
-    if (fromHistory !== true && !(window.location.search.includes('edit=true'))) {
+    if (!(window.location.search.includes('edit=true'))) {
         history.pushState({ categoria: targetId }, "", "?categoria=" + targetId + "&" + getCacheBuster());
     }
 
@@ -3464,7 +3395,7 @@ btnCategorias.addEventListener('click', () => {
 });
 
 // Nueva Funcion global goHome para el boton del logo
-window.goHome = function (fromHistory = false) {
+window.goHome = function () {
   const catalogo = document.getElementById("catalogo-completo");
   const destacados = document.querySelector(".destacados");
   const nuevosIngresos = document.getElementById("nuevosIngresosSection");
@@ -3472,7 +3403,7 @@ window.goHome = function (fromHistory = false) {
 
   // ✅ Limpiar la URL: elimina ?banner=..., ?producto=... o cualquier query param
   // Sin esto, si el usuario refresca después de ver un banner, volvería a cargar el banner
-  if (fromHistory !== true && (window.location.search || window.location.hash)) {
+  if (window.location.search || window.location.hash) {
     history.replaceState(null, '', window.location.pathname);
   }
 
@@ -3757,11 +3688,6 @@ if (btnShareLink) {
 
   onPixisDOMReady(window.updateMetaFromUrl);
   window.addEventListener('popstate', window.updateMetaFromUrl);
-  window.addEventListener('popstate', () => {
-    if (typeof window.syncAppStateFromUrl === 'function') {
-      window.syncAppStateFromUrl(true);
-    }
-  });
 })();
 
 // Permite abrir producto especifico en otra pestaña presionando botón del MEDIO del ratón
@@ -3794,12 +3720,11 @@ document.addEventListener('auxclick', e => {
             }
             body {
                 width: 100%;
-                overflow-x: clip;
+                overflow-x: hidden;
             }
-            .card img, .card video {
+            .container, .productos, .card, img, video {
                 max-width: 100%;
                 width: 100%;
-                height: auto;
             }
             .card {
                 display: flex;

@@ -42,13 +42,9 @@ $posY = ($canvasH - $newH) / 2;
 // 4. Copiar y redimensionar
 imagecopyresampled($canvas, $source, $posX, $posY, 0, 0, $newW, $newH, $width, $height);
 
-header('Cache-Control: public,max-age=604800');
-ob_start();
-imagejpeg($canvas, null, 90);
-$imageData = ob_get_clean();
-header('Content-Length: ' . strlen($imageData));
+// 5. Salida
 header('Content-Type: image/jpeg');
-echo $imageData;
+imagejpeg($canvas, null, 90);
 
 // Limpiar
 imagedestroy($canvas);

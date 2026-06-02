@@ -6,7 +6,6 @@
 
 // Forzar que el servidor NUNCA cachee esta respuesta.
 // Los scrapers de WhatsApp y Facebook siempre leerán metadata fresca.
-header('Content-Type: text/html; charset=UTF-8');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
@@ -119,14 +118,11 @@ $CATEGORIAS_SEO = [
 
 $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]";
 
-// --- LÓGICA DE DETECCIÓN DE PLATAFORMA ---
-// meta_image.php SOLO se usa para Facebook puro.
-// WhatsApp privado usa facebookexternalhit pero SIN 'WhatsApp' en el User-Agent.
-// Si se detecta facebookexternalhit + WhatsApp (o cualquier otra plataforma), se usa imagen directa.
+// --- NUEVA LÓGICA DE DETECCIÓN DE PLATAFORMA ---
+// WhatsApp y Telegram prefieren la imagen original (ancha)
+// Facebook y Discord prefieren la imagen ajustada (1.91:1) para no recortar
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-$isFacebookOnly = (strpos($userAgent, 'facebookexternalhit') !== false && strpos($userAgent, 'WhatsApp') === false);
-// $isWhatsApp = true significa "NO usar meta_image.php" (imagen directa)
-$isWhatsApp = !$isFacebookOnly;
+$isWhatsApp = (strpos($userAgent, 'WhatsApp') !== false || strpos($userAgent, 'Telegram') !== false);
 
 if ($bannerId) {
     $redirectUrl = $baseUrl . "/index.html?banner=" . urlencode($bannerId);
@@ -135,9 +131,6 @@ if ($bannerId) {
 } else {
     $redirectUrl = $baseUrl . "/index.html" . ($slug ? "?producto=" . urlencode($slug) : "");
 }
-
-// Para og:url MANTENER LA URL ORIGINAL solicitada para evitar rechazos por mismatch en WhatsApp
-$ogUrl = "https://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 
 /**
  * Convierte un título a slug idéntico al del JS
@@ -290,7 +283,7 @@ if ($theBanner) {
     $directBannerImg = makeImageUrl($theBanner['img'] ?? 'img/logo_pixis.png', $baseUrl);
     
     // BANNER: Original en WhatsApp, Ajustado en Facebook
-    $image = $isWhatsApp ? $directBannerImg : ($baseUrl . "/meta_image.php?url=" . urlencode($directBannerImg) . "&ext=.jpg");
+    $image = $isWhatsApp ? $directBannerImg : ($baseUrl . "/meta_image.php?url=" . urlencode($directBannerImg));
 
 } elseif ($theCategory || isset($CATEGORIAS_SEO[strtolower($categoriaId)])) {
     $catLower = strtolower($categoriaId);
@@ -321,7 +314,7 @@ if ($theBanner) {
     $directCategoryImg = makeImageUrl($imgSource, $baseUrl);
 
     // CATEGORÍA: Original en WhatsApp, Ajustado en Facebook
-    $image = $isWhatsApp ? $directCategoryImg : ($baseUrl . "/meta_image.php?url=" . urlencode($directCategoryImg) . "&ext=.jpg");
+    $image = $isWhatsApp ? $directCategoryImg : ($baseUrl . "/meta_image.php?url=" . urlencode($directCategoryImg));
 
 } elseif ($theProduct) {
     $productTitle = $theProduct['title'];
@@ -345,13 +338,13 @@ if ($theBanner) {
     $directProductImage = makeImageUrl($firstImg, $baseUrl);
 
     // PRODUCTO: Original en WhatsApp, Ajustado en Facebook para evitar recortes
-    $image = $isWhatsApp ? $directProductImage : ($baseUrl . "/meta_image.php?url=" . urlencode($directProductImage) . "&ext=.jpg");
+    $image = $isWhatsApp ? $directProductImage : ($baseUrl . "/meta_image.php?url=" . urlencode($directProductImage));
 
 } else {
     $title = "Pixis Informática | Especialistas en Computación";
     $description = "Tienda de computación online en Santiago del Estero. Venta de accesorios gamer y hardware.";
     $defaultImg = $baseUrl . "/img/logo_pixis.png";
-    $image = $isWhatsApp ? $defaultImg : ($baseUrl . "/meta_image.php?url=" . urlencode($defaultImg) . "&ext=.jpg");
+    $image = $isWhatsApp ? $defaultImg : ($baseUrl . "/meta_image.php?url=" . urlencode($defaultImg));
 }
 
 ?>
@@ -363,18 +356,14 @@ if ($theBanner) {
     
     <!-- Metadatos para Robots (Pro-SEO) -->
     <meta name="description" content="<?php echo htmlspecialchars($description); ?>">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="article">
     <meta property="og:site_name" content="Pixis Informática">
     <meta property="og:locale" content="es_AR">
     <meta property="og:title" content="<?php echo htmlspecialchars($title); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($description); ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars($image); ?>">
-    <meta property="og:image:secure_url" content="<?php echo htmlspecialchars($image); ?>">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="<?php echo htmlspecialchars($title); ?>">
-    <meta property="og:url" content="<?php echo htmlspecialchars($ogUrl); ?>">
+    <meta property="og:url" content="<?php echo htmlspecialchars($redirectUrl); ?>">
     
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<?php echo htmlspecialchars($title); ?>">
@@ -382,11 +371,9 @@ if ($theBanner) {
     <meta name="twitter:image" content="<?php echo htmlspecialchars($image); ?>">
 
     <!-- Redirección para humanos (por si acaso caen aquí) -->
-    <?php if (!isset($_SERVER['HTTP_USER_AGENT']) || !preg_match('/WhatsApp|facebookexternalhit|TelegramBot|Discordbot/i', $_SERVER['HTTP_USER_AGENT'])): ?>
     <script>
         window.location.replace("<?php echo $redirectUrl; ?>");
     </script>
-    <?php endif; ?>
 </head>
 <body>
     <p>Redirigiendo a Pixis Informática...</p>
