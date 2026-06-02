@@ -122,9 +122,7 @@ $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "
 // WhatsApp y Telegram prefieren la imagen original (ancha)
 // Facebook y Discord prefieren la imagen ajustada (1.91:1) para no recortar
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-// WhatsApp privado se identifica como facebookexternalhit; para asegurar la vista previa
-// en chats privados se DEBE entregar la imagen directa (rápida y estática).
-$isWhatsApp = (stripos($userAgent, 'WhatsApp') !== false || stripos($userAgent, 'Telegram') !== false || stripos($userAgent, 'facebookexternalhit') !== false);
+$isWhatsApp = (strpos($userAgent,'WhatsApp')!==false || strpos($userAgent,'Telegram') !== false);
 
 if ($bannerId) {
     $redirectUrl = $baseUrl . "/index.html?banner=" . urlencode($bannerId);
@@ -363,14 +361,10 @@ if ($theBanner) {
     <meta property="og:title" content="<?php echo htmlspecialchars($title); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($description); ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars($image); ?>">
-    <meta property="og:image:secure_url" content="<?php echo htmlspecialchars($image); ?>">
-    <?php 
-       $ext = strtolower(pathinfo(parse_url($image, PHP_URL_PATH), PATHINFO_EXTENSION));
-       $mime = ($ext == 'png') ? 'image/png' : (($ext == 'webp') ? 'image/webp' : 'image/jpeg');
-    ?>
-    <meta property="og:image:type" content="<?php echo $mime; ?>">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:secure_url" content="<?php echo htmlspecialchars($image); ?>">
     <meta property="og:image:alt" content="<?php echo htmlspecialchars($title); ?>">
     <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
     
