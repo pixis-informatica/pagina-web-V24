@@ -117,5 +117,16 @@
       "t": "Gabinetes Mlogix"
     }
   },
-  "cacheVersion": 1780419539635
+  "cacheVersion": 1780420558571,
+  "tasasCuotas": [
+    1.13,
+    1.31,
+    1.31,
+    1.6,
+    1.6
+  ],
+  "imageOptimization": {
+    "enabled": true,
+    "proxyUrl": "https://images.weserv.nl/?url="
+  }
 }
