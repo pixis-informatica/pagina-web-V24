@@ -43,8 +43,15 @@ $posY = ($canvasH - $newH) / 2;
 imagecopyresampled($canvas, $source, $posX, $posY, 0, 0, $newW, $newH, $width, $height);
 
 // 5. Salida
-header('Content-Type: image/jpeg');
+ob_start();
 imagejpeg($canvas, null, 90);
+$imageData = ob_get_contents();
+ob_end_clean();
+
+header('Content-Type: image/jpeg');
+header('Content-Length: ' . strlen($imageData));
+header('Cache-Control: public, max-age=31536000');
+echo $imageData;
 
 // Limpiar
 imagedestroy($canvas);
