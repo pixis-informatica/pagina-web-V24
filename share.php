@@ -118,11 +118,14 @@ $CATEGORIAS_SEO = [
 
 $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]";
 
-// --- NUEVA LÓGICA DE DETECCIÓN DE PLATAFORMA ---
-// WhatsApp y Telegram prefieren la imagen original (ancha)
-// Facebook y Discord prefieren la imagen ajustada (1.91:1) para no recortar
+// --- LÓGICA DE DETECCIÓN DE PLATAFORMA ---
+// meta_image.php SOLO se usa para Facebook puro.
+// WhatsApp privado usa facebookexternalhit pero SIN 'WhatsApp' en el User-Agent.
+// Si se detecta facebookexternalhit + WhatsApp (o cualquier otra plataforma), se usa imagen directa.
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-$isWhatsApp = (strpos($userAgent, 'WhatsApp') !== false || strpos($userAgent, 'Telegram') !== false);
+$isFacebookOnly = (strpos($userAgent, 'facebookexternalhit') !== false && strpos($userAgent, 'WhatsApp') === false);
+// $isWhatsApp = true significa "NO usar meta_image.php" (imagen directa)
+$isWhatsApp = !$isFacebookOnly;
 
 if ($bannerId) {
     $redirectUrl = $baseUrl . "/index.html?banner=" . urlencode($bannerId);
