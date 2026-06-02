@@ -358,18 +358,19 @@ if ($theBanner) {
     
     <!-- Metadatos para Robots (Pro-SEO) -->
     <meta name="description" content="<?php echo htmlspecialchars($description); ?>">
-    <meta property="og:type" content="article">
+    <meta property="og:type" content="website">
     <meta property="og:site_name" content="Pixis Informática">
-    <meta property="og:locale" content="es_AR">
     <meta property="og:title" content="<?php echo htmlspecialchars($title); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($description); ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars($image); ?>">
     <meta property="og:image:secure_url" content="<?php echo htmlspecialchars($image); ?>">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <?php 
+       $ext = strtolower(pathinfo(parse_url($image, PHP_URL_PATH), PATHINFO_EXTENSION));
+       $mime = ($ext == 'png') ? 'image/png' : (($ext == 'webp') ? 'image/webp' : 'image/jpeg');
+    ?>
+    <meta property="og:image:type" content="<?php echo $mime; ?>">
     <meta property="og:image:alt" content="<?php echo htmlspecialchars($title); ?>">
-    <meta property="og:url" content="<?php echo htmlspecialchars($redirectUrl); ?>">
+    <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
     
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<?php echo htmlspecialchars($title); ?>">
