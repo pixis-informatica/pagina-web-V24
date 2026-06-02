@@ -375,9 +375,11 @@ if ($theBanner) {
     <meta name="twitter:image" content="<?php echo htmlspecialchars($image); ?>">
 
     <!-- Redirección para humanos (por si acaso caen aquí) -->
+    <?php if (!isset($_SERVER['HTTP_USER_AGENT']) || !preg_match('/WhatsApp|facebookexternalhit|TelegramBot|Discordbot/i', $_SERVER['HTTP_USER_AGENT'])): ?>
     <script>
         window.location.replace("<?php echo $redirectUrl; ?>");
     </script>
+    <?php endif; ?>
 </head>
 <body>
     <p>Redirigiendo a Pixis Informática...</p>
