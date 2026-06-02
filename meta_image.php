@@ -42,17 +42,9 @@ $posY = ($canvasH - $newH) / 2;
 // 4. Copiar y redimensionar
 imagecopyresampled($canvas, $source, $posX, $posY, 0, 0, $newW, $newH, $width, $height);
 
-// 5. Salida con buffer para Content-Length y Cache (Requisito WhatsApp Privado)
-ob_start();
-imagejpeg($canvas, null, 90);
-$data = ob_get_contents();
-$size = ob_get_length();
-ob_end_clean();
-
+// 5. Salida
 header('Content-Type: image/jpeg');
-header('Cache-Control: public, max-age=604800');
-header('Content-Length: ' . $size);
-echo $data;
+imagejpeg($canvas, null, 90);
 
 // Limpiar
 imagedestroy($canvas);
