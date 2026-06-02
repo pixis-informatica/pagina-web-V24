@@ -6,6 +6,7 @@
 
 // Forzar que el servidor NUNCA cachee esta respuesta.
 // Los scrapers de WhatsApp y Facebook siempre leerán metadata fresca.
+header('Content-Type: text/html; charset=UTF-8');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
@@ -134,6 +135,9 @@ if ($bannerId) {
 } else {
     $redirectUrl = $baseUrl . "/index.html" . ($slug ? "?producto=" . urlencode($slug) : "");
 }
+
+// Para og:url MANTENER LA URL ORIGINAL solicitada para evitar rechazos por mismatch en WhatsApp
+$ogUrl = "https://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 
 /**
  * Convierte un título a slug idéntico al del JS
@@ -286,7 +290,7 @@ if ($theBanner) {
     $directBannerImg = makeImageUrl($theBanner['img'] ?? 'img/logo_pixis.png', $baseUrl);
     
     // BANNER: Original en WhatsApp, Ajustado en Facebook
-    $image = $isWhatsApp ? $directBannerImg : ($baseUrl . "/meta_image.php?url=" . urlencode($directBannerImg));
+    $image = $isWhatsApp ? $directBannerImg : ($baseUrl . "/meta_image.php?url=" . urlencode($directBannerImg) . "&ext=.jpg");
 
 } elseif ($theCategory || isset($CATEGORIAS_SEO[strtolower($categoriaId)])) {
     $catLower = strtolower($categoriaId);
@@ -317,7 +321,7 @@ if ($theBanner) {
     $directCategoryImg = makeImageUrl($imgSource, $baseUrl);
 
     // CATEGORÍA: Original en WhatsApp, Ajustado en Facebook
-    $image = $isWhatsApp ? $directCategoryImg : ($baseUrl . "/meta_image.php?url=" . urlencode($directCategoryImg));
+    $image = $isWhatsApp ? $directCategoryImg : ($baseUrl . "/meta_image.php?url=" . urlencode($directCategoryImg) . "&ext=.jpg");
 
 } elseif ($theProduct) {
     $productTitle = $theProduct['title'];
@@ -341,13 +345,13 @@ if ($theBanner) {
     $directProductImage = makeImageUrl($firstImg, $baseUrl);
 
     // PRODUCTO: Original en WhatsApp, Ajustado en Facebook para evitar recortes
-    $image = $isWhatsApp ? $directProductImage : ($baseUrl . "/meta_image.php?url=" . urlencode($directProductImage));
+    $image = $isWhatsApp ? $directProductImage : ($baseUrl . "/meta_image.php?url=" . urlencode($directProductImage) . "&ext=.jpg");
 
 } else {
     $title = "Pixis Informática | Especialistas en Computación";
     $description = "Tienda de computación online en Santiago del Estero. Venta de accesorios gamer y hardware.";
     $defaultImg = $baseUrl . "/img/logo_pixis.png";
-    $image = $isWhatsApp ? $defaultImg : ($baseUrl . "/meta_image.php?url=" . urlencode($defaultImg));
+    $image = $isWhatsApp ? $defaultImg : ($baseUrl . "/meta_image.php?url=" . urlencode($defaultImg) . "&ext=.jpg");
 }
 
 ?>
@@ -370,7 +374,7 @@ if ($theBanner) {
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="<?php echo htmlspecialchars($title); ?>">
-    <meta property="og:url" content="<?php echo htmlspecialchars($redirectUrl); ?>">
+    <meta property="og:url" content="<?php echo htmlspecialchars($ogUrl); ?>">
     
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<?php echo htmlspecialchars($title); ?>">
