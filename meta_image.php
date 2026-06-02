@@ -5,11 +5,6 @@
  */
 
 $imgUrl = isset($_GET['url']) ? $_GET['url'] : '';
-// --- REGISTRO DE EVIDENCIA (PASO 1) ---
-$ua = $_SERVER['HTTP_USER_AGENT'] ?? 'N/A';
-$logData = date('Y-m-d H:i:s') . " | META_IMG REQUEST | UA: " . $ua . " | URL: " . $imgUrl . "\n";
-@file_put_contents(__DIR__ . '/data/scrapers.log', $logData, FILE_APPEND);
-// -------------------------------------
 if (!$imgUrl) exit;
 
 // 1. Cargar la imagen original

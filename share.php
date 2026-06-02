@@ -122,16 +122,9 @@ $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "
 // WhatsApp y Telegram prefieren la imagen original (ancha)
 // Facebook y Discord prefieren la imagen ajustada (1.91:1) para no recortar
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-// Detección más robusta (case-insensitive) y amplia
-$isWhatsApp = (stripos($userAgent, 'WhatsApp') !== false || stripos($userAgent, 'Telegram') !== false);
-$isFacebook = (stripos($userAgent, 'facebookexternalhit') !== false || stripos($userAgent, 'Facebot') !== false);
-
-// --- REGISTRO DE EVIDENCIA (PASO 1) ---
-// Registramos si llega como FB o WSP para desempatar el problema de los chats privados
-$logPlatform = $isWhatsApp ? 'WSP/TG' : ($isFacebook ? 'FB' : 'OTHER');
-$logData = date('Y-m-d H:i:s') . " | UA: " . $userAgent . " | PLAT: " . $logPlatform . " | URI: " . $_SERVER['REQUEST_URI'] . " | IP: " . $_SERVER['REMOTE_ADDR'] . "\n";
-@file_put_contents(__DIR__ . '/data/scrapers.log', $logData, FILE_APPEND);
-// -------------------------------------
+// WhatsApp privado se identifica como facebookexternalhit; para asegurar la vista previa
+// en chats privados se DEBE entregar la imagen directa (rápida y estática).
+$isWhatsApp = (stripos($userAgent, 'WhatsApp') !== false || stripos($userAgent, 'Telegram') !== false || stripos($userAgent, 'facebookexternalhit') !== false);
 
 if ($bannerId) {
     $redirectUrl = $baseUrl . "/index.html?banner=" . urlencode($bannerId);
