@@ -364,6 +364,10 @@ if ($theBanner) {
     <meta property="og:title" content="<?php echo htmlspecialchars($title); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($description); ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars($image); ?>">
+    <meta property="og:image:secure_url" content="<?php echo htmlspecialchars($image); ?>">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="<?php echo htmlspecialchars($title); ?>">
     <meta property="og:url" content="<?php echo htmlspecialchars($redirectUrl); ?>">
     
